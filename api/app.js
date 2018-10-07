@@ -24,7 +24,7 @@ app.get('/testGet', (req, res) => {
 });
 app.post('/testPost', (req, res) => {
     console.log(req.body);
-    res.status(200).send({ message: 'Testing Post on Node Js without Routes' });
+    res.status(200).send({ message: 'Testing Post on Node Js without' });
 });
 
 app.use('/api', user_Routes);
