@@ -7,6 +7,7 @@ var jwt = require('../services/jwt');
 var mongoosePagination = require('mongoose-pagination');
 var fs = require('fs');
 var path = require('path');
+var Follow = require('../models/follow');
 
 function testGet (req, res) {
     res.status(200).send({ message: 'Testing Get on Node Js' });
@@ -103,7 +104,13 @@ function getUser (req, res) {
 
         if(!user) return res.status(404).send({message: 'Usuario no existe'});
 
-        return res.status(200).send({user});
+        Follow
+            .findOne({user: req.user.id, followed: userId})
+            .exec((err, follow) => {
+                if (err) return res.status(500).send({message: 'Error en petición follow'});
+
+                return res.status(200).send({ user, follow});
+        });
 
     });
 }
