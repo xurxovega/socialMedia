@@ -6,7 +6,8 @@ var bodyParser = require('body-parser');
 var app = express();
 
 // Load url
-var user_Routes = require('./routes/user');
+var userRoutes = require('./routes/user');
+var followRoutes = require('./routes/follow');
 
 
 // Middleware
@@ -27,6 +28,7 @@ app.post('/testPost', (req, res) => {
     res.status(200).send({ message: 'Testing Post on Node Js without' });
 });
 
-app.use('/api', user_Routes);
+app.use('/api', userRoutes);
+app.use('/api', followRoutes);
 
 module.exports = app;

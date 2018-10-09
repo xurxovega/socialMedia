@@ -5,6 +5,8 @@ var User = require('../models/user');
 var bcrypt = require('bcrypt-nodejs');
 var jwt = require('../services/jwt');
 var mongoosePagination = require('mongoose-pagination');
+var fs = require('fs');
+var path = require('path');
 
 function testGet (req, res) {
     res.status(200).send({ message: 'Testing Get on Node Js' });
@@ -67,7 +69,6 @@ function loginUser (req, res) {
 
     var email    = params.email;
     var password = params.password;
-
 
     User.findOne({email: email}, (err, user)=>{
         if(err) return res.status(500).send({message: 'Error en logIn (user.loginUser)'});
@@ -144,33 +145,76 @@ function updateUser (req, res) {
 
     }
 
-    User.findByIdAndUpdate(userId, updateParams, {new: true}, (err, userUpdated) => {
+    User.findOneAndUpdate(userId, updateParams, {new: true}, (err, userUpdated) => {
         if(err) return res.status(500).send({message: 'Error al actualizar usuario user.userUpdate'});
         if (!userUpdated) return res.status(404).send({ message: 'No se ha actualizado el usuario user.userUpdate' });
         
         return res.status(200).send({user: userUpdated});
 
     });
-
-
 }
-
 
 // Actualizar Imagen Usuario
 function updloadImage (req, res) {
     var userId = req.params.id;
 
-    if (userId != req.user.id) {
-        return res.status(500).send({ message: 'No tienes permiso para modificar el usuario user.uploadimage' });
-    }
-
     if (req.files) {
+        //console.log(req.files);
+        //var filePath = req.files.image.path;
+        //var fileSplit = filePath.split('\\');
+        //var fileName = fileSplit[2];
         var filePath = req.files.image.path;
-        var fileSplit = filePath.split('\\');
+        var fileName = req.files.image.path.split('\\')[3];
+        var fileExt  = fileName.split('\.')[1];
 
-        console.log(filePath);
+        if (userId != req.user.id) {
+             return removeFiles(res, filePath, 'No tienes permiso para modificar el usuario user.uploadimage');
+             // hay que poner return ya que no es asincrónico y si se le da rápido y seguido se peta
+        }
+
+        if(fileExt == 'png'|| fileExt == 'jpg' || fileExt == 'jpeg' || fileExt == 'gif'){
+            // Actualizar documento de usuario logueado
+            User.findOneAndUpdate( 
+                userId, 
+                {image: fileName}, 
+                { new: true }, 
+                (err, userUpdated) => {
+                    if (err) return res.status(500).send({ message: 'Error al actualizar usuario user.userUpdate' });
+                    if (!userUpdated) return res.status(404).send({ message: 'No se ha actualizado el usuario user.userUpdate' });
+
+                    return res.status(200).send({ user: userUpdated });
+                }
+            );
+        }else{
+            return removeFiles(res, filePath, 'Extensión de fichero no válida');
+            // hay que poner return ya que no es asincrónico y si se le da rápido y seguido se peta
+        }
+    }else{
+        res.status(200).send({message:'No se han enviado mensajes'});
     }
 
+}
+
+// Obtener imagen
+function getImageFile(req, res){
+    var imgFile = req.params.imageFile;
+
+    var pathFile = './upload/img/users/' + imgFile;
+
+    fs.exists(pathFile, (exist) => {
+        if(exist){
+            res.sendFile(path.resolve(pathFile));
+        }else{
+            res.status(200).send({message: 'No existe la imagen'});
+        }
+    });
+}
+
+// Borra ficheros
+function removeFiles(res, filePath, message){ // se pasa el res para poder devolver la respuesta
+    fs.unlink(filePath, (err) => {
+        return res.status(200).send({ message: message });
+    });
 }
 
 
@@ -182,5 +226,7 @@ module.exports = {
   loginUser,
   getUser,
   getUsers,
-  updateUser
+  updateUser,
+  updloadImage,
+  getImageFile
 };
