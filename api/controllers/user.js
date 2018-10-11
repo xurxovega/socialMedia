@@ -104,15 +104,44 @@ function getUser (req, res) {
 
         if(!user) return res.status(404).send({message: 'Usuario no existe'});
 
-        Follow
-            .findOne({user: req.user.id, followed: userId})
-            .exec((err, follow) => {
-                if (err) return res.status(500).send({message: 'Error en petición follow'});
-
-                return res.status(200).send({ user, follow});
+        user.password = undefined; // Para no devolver el password en el objecto;
+        // Al utilizar sync devuelve una promesa
+        getfollowThisUser(req.user.id, userId).then( (valueFollow)=> {
+            return res.status(200).send(
+                {    user,
+                    following: valueFollow.following,
+                    followed: valueFollow.followed
+              });
         });
+        console.log('trace4');
 
     });
+}
+
+async function getfollowThisUser(identUserId, userId){
+    // Con el await esperemos sincronamente a que acabe la llamada
+    var following = 
+        await Follow
+            .findOne({ user: identUserId, followed: userId } //)
+                , (err, follow) => {
+            // .exec((err, follow) => { // el Exec no mapea bien el resultado
+                if (err) return handleError(err);
+                return  follow;
+            });
+
+    var followed =  
+        await Follow
+            .findOne({ user: userId , followed: identUserId } //)
+            //.exec((err, follow) => { // el Exec no mapea bien el resultado
+                , (err, follow) => {
+                if (err) return handleError(err);
+                return follow;
+            });
+
+        return {
+            following: following,
+            followed: followed
+        }
 }
 
 // Consulta Usuario Paginado
@@ -131,13 +160,49 @@ function getUsers (req, res) {
 
         if(!users)  return res.status(404).send({message: 'No existen usuarios'});
 
-        return res.status(200).send({
-            users,
-            total,
-            pages: Math.ceil(total/itemsPerPage)
+        getFollowsUsersId(identityUserId).then((valueFollow) => {
+            return res.status(200).send({
+                users,
+                userFollowing: valueFollow.following,
+                userFollowedMe: valueFollow.followed,
+                total,
+                pages: Math.ceil(total / itemsPerPage)
+            });
         });
 
     });
+}
+
+
+async function getFollowsUsersId(userId){
+
+    var following = 
+        await Follow.find({user: userId},  { '_id': 0, '__v': 0, 'user': 0 }, //'followed',
+            (err, follows) => {
+            if (err) return handleError(err);
+        
+            var followingArray = [];
+            follows.forEach((follow) => {
+                followingArray.push(follow.followed);
+            });
+            return followingArray;
+        });
+
+    var followed =
+        await Follow.find({ followed: userId }, { '_id': 0, '__v': 0, 'followed': 0 }, //'user',
+            (err, follows) => {
+                if (err) return handleError(err);
+
+                var followingArray = [];
+                follows.forEach((follow) => {
+                    followingArray.push(follow.followed);
+                });
+                return followingArray;
+            }); 
+    return {
+        following: following,
+        followed: followed
+    }
 }
 
 // Actualizar Usuario
