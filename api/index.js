@@ -1,5 +1,7 @@
 'use strict'
 
+// En index  establecemos la conexión y servidor DB.
+
 var mongoose = require('mongoose');
 var app = require('./app');
 var port = 3800;

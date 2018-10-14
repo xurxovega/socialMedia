@@ -8,6 +8,7 @@ var app = express();
 // Load url
 var userRoutes = require('./routes/user');
 var followRoutes = require('./routes/follow');
+var publicationRoutes = require('./routes/publication');
 
 
 // Middleware
@@ -30,5 +31,6 @@ app.post('/testPost', (req, res) => {
 
 app.use('/api', userRoutes);
 app.use('/api', followRoutes);
+app.use('/api', publicationRoutes);
 
 module.exports = app;

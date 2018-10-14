@@ -9,14 +9,17 @@ var fs = require('fs');
 var path = require('path');
 var Follow = require('../models/follow');
 
+
 function testGet (req, res) {
     res.status(200).send({ message: 'Testing Get on Node Js' });
 }
+
 
 function testPost (req, res) {
     console.log(req.body);
     res.status(200).send({ message: 'Testing Post on Node Js' });
 }
+
 
 // Registro de Nuevo Usuario
 function registerUser (req, res) {
@@ -64,6 +67,7 @@ function registerUser (req, res) {
     }
 }
 
+
 // Login Usuario
 function loginUser (req, res) {
     var params = req.body;
@@ -95,6 +99,7 @@ function loginUser (req, res) {
 
 }
 
+
 // Consulta Usuario
 function getUser (req, res) {
     var userId = req.params.id;
@@ -118,6 +123,8 @@ function getUser (req, res) {
     });
 }
 
+
+// Obtiene los Follows y los Followers del usuario
 async function getfollowThisUser(identUserId, userId){
     // Con el await esperemos sincronamente a que acabe la llamada
     var following = 
@@ -143,6 +150,7 @@ async function getfollowThisUser(identUserId, userId){
             followed: followed
         }
 }
+
 
 // Consulta Usuario Paginado
 function getUsers (req, res) {
@@ -174,6 +182,7 @@ function getUsers (req, res) {
 }
 
 
+// Obtiene los Follows y Followers del usuario pasado.
 async function getFollowsUsersId(userId){
 
     var following = 
@@ -205,6 +214,55 @@ async function getFollowsUsersId(userId){
     }
 }
 
+
+function getCounters(req, res)
+{
+    var userId = req.user.id;
+
+    if (req.params.id){
+        userId = req.params.id;
+    }
+    
+    getCountFollows(userId).then((value) => { 
+        console.log('trace3: ',value);
+        return res.status(200).send(value) 
+    });
+
+}
+
+async function getCountFollows(userId){
+
+    /*
+    var following = await Follow.count({user: userId}).exec((err, count) => {
+        if (err) handleError(err);
+        console.log('trace1: ', count);
+        return count;
+    });
+
+    var followed = await Follow.count({ followed: userId }).exec((err, count) => {
+        if (err) handleError(err);
+        console.log('trace2: ',count);
+        return count;
+    });
+    */
+    // Async no mapea bien el resultado a la función de retorno
+    var following = await Follow.count({ user: userId }, (err, count) => {
+        if (err) handleError(err);
+        return count;
+    });
+
+    var followed = await Follow.count({ followed: userId }, (err, count) => {
+        if (err) handleError(err);
+        return count;
+    });
+    
+    return {
+        following: following,
+        followed: followed
+    }
+}
+
+
 // Actualizar Usuario
 function updateUser (req, res) {
     var userId = req.params.id;
@@ -225,6 +283,7 @@ function updateUser (req, res) {
 
     });
 }
+
 
 // Actualizar Imagen Usuario
 function updloadImage (req, res) {
@@ -267,6 +326,7 @@ function updloadImage (req, res) {
 
 }
 
+
 // Obtener imagen
 function getImageFile(req, res){
     var imgFile = req.params.imageFile;
@@ -281,6 +341,7 @@ function getImageFile(req, res){
         }
     });
 }
+
 
 // Borra ficheros
 function removeFiles(res, filePath, message){ // se pasa el res para poder devolver la respuesta
@@ -298,6 +359,7 @@ module.exports = {
   loginUser,
   getUser,
   getUsers,
+  getCounters,
   updateUser,
   updloadImage,
   getImageFile

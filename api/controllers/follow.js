@@ -77,6 +77,7 @@ function getFollowUsers(req, res){
 
 }
 
+
 // Lista de usuarios que nos siguen
 function getFollowedUsers(req, res){
 

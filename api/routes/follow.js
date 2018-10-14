@@ -3,6 +3,7 @@
 var express = require('express');
 var FollowController = require('../controllers/follow');
 var mdAuth = require('../middlewares/auth');
+// Hay que añadir el use al fichero app.js para que enrute bien.
 
 var api = express.Router();
 
