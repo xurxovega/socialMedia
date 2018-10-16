@@ -129,11 +129,77 @@ function deletePublication(req, res){
 }
 
 
+// Subir imagen a publicación
+function uploadImage(req, res){
+    var userId = req.user.id;
+    var publicationId = req.params.id;
+
+    if (req.files) {
+
+        var filePath = req.files.image.path;
+        var fileName = req.files.image.path.split('\\')[3];
+        var fileExt  = fileName.split('\.')[1];
+
+
+        if (fileExt == 'png' || fileExt == 'jpg' || fileExt == 'jpeg' || fileExt == 'gif') {
+            // Actualizar documento de publicacion
+            Publication.findOneAndUpdate(
+                {user: userId, _id: publicationId},
+                { file: fileName },
+                { new: true },
+                (err, publicationUpdated) => {
+                    if (err) {
+                        return removeFiles(res, filePath, 'Error al actualizarla publicación');
+                    }
+                    if (!publicationUpdated) {
+                        return removeFiles(res, filePath, 'No se ha actualizado la publicación' );
+                    }
+                    return res.status(200).send({ user: publicationUpdated });
+                }
+            );
+        } else {
+            return removeFiles(res, filePath, 'Extensión de fichero no válida');
+            // hay que poner return ya que no es asincrónico y si se le da rápido y seguido se peta
+        }
+    } else {
+        res.status(200).send({ message: 'No se han enviado mensajes' });
+    }
+
+}
+
+
+// Obtener imagen
+function getImageFile(req, res) {
+    var imgFile = req.params.imageFile;
+
+    var pathFile = './upload/img/publications/' + imgFile;
+
+    fs.exists(pathFile, (exist) => {
+        if (exist) {
+            res.sendFile(path.resolve(pathFile));
+        } else {
+            res.status(200).send({ message: 'No existe la imagen' });
+        }
+    });
+}
+
+
+// Borra ficheros
+function removeFiles(res, filePath, message) { // se pasa el res para poder devolver la respuesta
+    fs.unlink(filePath, (err) => {
+        return res.status(200).send({ message: message });
+    });
+}
+
+
+
 module.exports = {
   testGetPublication,
   testPostPublication,
   savePublication,
   getPublications,
   getPublication,
-  deletePublication
+  deletePublication,
+  uploadImage,
+  getImageFile
 };

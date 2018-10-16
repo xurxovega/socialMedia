@@ -8,6 +8,7 @@ var mongoosePagination = require('mongoose-pagination');
 var fs = require('fs');
 var path = require('path');
 var Follow = require('../models/follow');
+var Publication = require('../models/publication');
 
 
 function testGet (req, res) {
@@ -224,7 +225,6 @@ function getCounters(req, res)
     }
     
     getCountFollows(userId).then((value) => { 
-        console.log('trace3: ',value);
         return res.status(200).send(value) 
     });
 
@@ -255,10 +255,17 @@ async function getCountFollows(userId){
         if (err) handleError(err);
         return count;
     });
+
+    var publication = await Publication.count({ user: userId }, (err, count) => {
+        if (err) handleError(err);
+        return count;
+    });
+
     
     return {
-        following: following,
-        followed: followed
+        following:   following,
+        followed:    followed,
+        publication: publication
     }
 }
 
